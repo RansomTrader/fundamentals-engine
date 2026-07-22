@@ -1,0 +1,48 @@
+name: Build and publish dashboard
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 12 * * 1"   # Mondays 12:00 UTC — refresh after any new filings
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      EDGAR_USER_AGENT: "Kyan Wiseley kyanwiseley@proton.me"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Run pipeline
+        run: |
+          cd src && python -m fundamentals.cli \
+            --subject INTC --peers AMD NVDA TSM \
+            --out ../output/dashboard.html --cache-dir ../data
+      - name: Stage site
+        run: cp output/dashboard.html output/index.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: output
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

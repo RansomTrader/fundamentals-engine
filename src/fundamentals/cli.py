@@ -41,8 +41,9 @@ def main() -> None:
     ranks = peers.rank_vs_peers(table, args.subject)
 
     out = report.build_dashboard(ratios, table, ranks, args.subject, args.out)
-    ratios.to_csv("output/ratios.csv", index=False)
-    print(f"Dashboard: {out}\nRatios CSV: output/ratios.csv")
+    csv_path = out.parent / "ratios.csv"
+    ratios.to_csv(csv_path, index=False)
+    print(f"Dashboard: {out}\nRatios CSV: {csv_path}")
 
 
 if __name__ == "__main__":
