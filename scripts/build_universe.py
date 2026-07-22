@@ -20,7 +20,7 @@ KEEP = [
     "gross_margin", "operating_margin", "net_margin", "fcf_margin",
     "rnd_intensity", "roe", "roa", "current_ratio", "quick_ratio",
     "debt_to_equity", "interest_coverage", "asset_turnover",
-    "revenue_growth", "net_income_growth",
+    "revenue_growth", "net_income_growth", "eps_diluted",
 ]
 
 

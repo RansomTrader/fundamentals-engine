@@ -3,95 +3,148 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#F6F5F1">
 <title>fundamentals-engine</title>
 <style>
-:root { --ink:#16212B; --paper:#F7F6F2; --accent:#0B5FA5; --rule:#D8D4CC;
-  --muted:#5A6570; --good:#2E7D5B; --bad:#B54834; --card:#FFFFFF; }
-* { box-sizing:border-box; }
-body { margin:0; background:var(--paper); color:var(--ink);
-  font:15px/1.55 Georgia,'Times New Roman',serif; }
-.wrap { max-width:1060px; margin:0 auto; padding:20px 16px 80px; }
-header { border-bottom:3px solid var(--ink); padding-bottom:12px; }
-.eyebrow { font:600 10px/1 ui-monospace,Menlo,monospace; letter-spacing:.18em;
-  text-transform:uppercase; color:var(--accent); }
-h1 { margin:6px 0 2px; font-size:26px; letter-spacing:-.01em; }
-.sub { color:var(--muted); font-size:13px; }
-nav { display:flex; gap:0; margin:18px 0 20px; border:1px solid var(--rule); }
-nav button { flex:1; padding:11px 0; background:var(--paper); border:0;
-  border-right:1px solid var(--rule); font:600 12px/1 ui-monospace,Menlo,monospace;
-  letter-spacing:.12em; text-transform:uppercase; color:var(--muted); cursor:pointer; }
-nav button:last-child { border-right:0; }
-nav button.active { background:var(--ink); color:var(--paper); }
-.addrow { display:flex; gap:8px; margin-bottom:14px; }
-.addrow input { flex:1; padding:11px 12px; border:1px solid var(--rule);
-  background:var(--card); font:600 15px ui-monospace,Menlo,monospace;
-  text-transform:uppercase; color:var(--ink); outline-color:var(--accent); }
-.addrow button { padding:11px 20px; border:0; background:var(--accent); color:#fff;
-  font:600 12px/1 ui-monospace,Menlo,monospace; letter-spacing:.1em; cursor:pointer; }
-.status { font:12px ui-monospace,Menlo,monospace; color:var(--muted); min-height:18px; margin-bottom:8px; }
+:root {
+  --paper:#F6F5F1; --card:#FFFFFF; --ink:#131C24; --muted:#66707A;
+  --accent:#0B5FA5; --accent-soft:#E9F1F8; --rule:#E4E1D9;
+  --good:#1E7A54; --bad:#B5402F;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --serif:Georgia,'Times New Roman',serif;
+}
+* { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html { scroll-behavior:smooth; }
+body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.55 var(--serif); }
+.wrap { max-width:1060px; margin:0 auto; padding:18px 16px 90px; }
+
+header { display:flex; align-items:baseline; justify-content:space-between;
+  gap:12px; padding-bottom:14px; border-bottom:2px solid var(--ink); }
+.brand { font:700 19px var(--serif); letter-spacing:-.01em; }
+.brand .dot { color:var(--accent); }
+.hdr-meta { font:10px/1.4 var(--mono); color:var(--muted); text-align:right; }
+.hdr-meta a { color:var(--accent); text-decoration:none; }
+
+nav { display:flex; margin:14px 0 16px; border-bottom:1px solid var(--rule); }
+nav button { appearance:none; background:none; border:0; padding:11px 14px 12px;
+  font:600 11px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase;
+  color:var(--muted); cursor:pointer; border-bottom:2px solid transparent;
+  margin-bottom:-1px; transition:color .15s, border-color .15s; }
+nav button.active { color:var(--ink); border-bottom-color:var(--accent); }
+nav button:active { color:var(--accent); }
+
+.addrow { display:flex; gap:8px; margin-bottom:10px; }
+.addrow input { flex:1; min-width:0; padding:12px 14px; border:1px solid var(--rule);
+  border-radius:8px; background:var(--card); font:600 15px var(--mono);
+  text-transform:uppercase; color:var(--ink); outline:none; transition:border-color .15s, box-shadow .15s; }
+.addrow input:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+.addrow input::placeholder { color:#A8B0B8; font-weight:500; }
+.addrow button { padding:12px 20px; border:0; border-radius:8px; background:var(--accent);
+  color:#fff; font:600 12px/1 var(--mono); letter-spacing:.08em; cursor:pointer;
+  transition:transform .1s, opacity .15s; }
+.addrow button:active { transform:scale(.97); opacity:.9; }
+
+.status { font:11px/1.5 var(--mono); color:var(--muted); min-height:17px; margin-bottom:8px; }
 .status.err { color:var(--bad); }
-.chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
-.chip { display:flex; align-items:center; gap:8px; padding:7px 10px;
-  border:1px solid var(--rule); background:var(--card);
-  font:600 13px ui-monospace,Menlo,monospace; cursor:pointer; }
-.chip.sel { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
-.chip .x { color:var(--muted); cursor:pointer; padding:0 2px; }
-.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr));
-  gap:1px; background:var(--rule); border:1px solid var(--rule); margin:14px 0 20px; }
-.kpi { background:var(--card); padding:10px 12px; }
-.kpi-label { font:600 9px/1.3 ui-monospace,Menlo,monospace; letter-spacing:.1em;
+
+.chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+.chip { display:inline-flex; align-items:center; gap:7px; padding:8px 11px;
+  border:1px solid var(--rule); border-radius:999px; background:var(--card);
+  font:600 12px var(--mono); cursor:pointer; color:var(--muted);
+  transition:all .15s; user-select:none; }
+.chip.sel { color:var(--ink); border-color:var(--accent);
+  background:var(--accent-soft); }
+.chip:active { transform:scale(.96); }
+.chip .x { color:#A8B0B8; padding:0 1px; font-size:11px; }
+.chip .x:active { color:var(--bad); }
+
+.view { animation:fade .2s ease; }
+@keyframes fade { from { opacity:0; transform:translateY(4px); } }
+@media (prefers-reduced-motion:reduce) { .view { animation:none; } }
+
+.co-name { font:15px var(--serif); color:var(--muted); margin:2px 0 10px; }
+.co-name b { color:var(--ink); }
+
+.kpis { display:grid; grid-template-columns:repeat(auto-fill,minmax(118px,1fr));
+  gap:8px; margin:0 0 20px; }
+.kpi { background:var(--card); border:1px solid var(--rule); border-radius:10px;
+  padding:11px 12px; }
+.kpi-label { font:600 8.5px/1.3 var(--mono); letter-spacing:.11em;
   text-transform:uppercase; color:var(--muted); }
-.kpi-value { font:600 18px/1.3 ui-monospace,Menlo,monospace; margin-top:5px; }
-h2 { font-size:18px; border-top:1px solid var(--rule); padding-top:16px; margin:24px 0 12px; }
-.grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-.chartbox { background:var(--card); border:1px solid var(--rule); padding:10px; }
-.chartbox h3 { margin:0 0 6px; font:600 11px/1 ui-monospace,Menlo,monospace;
-  letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
-table { width:100%; border-collapse:collapse; font-size:13px; background:var(--card); }
-th { text-align:left; font:600 9px/1.3 ui-monospace,Menlo,monospace; letter-spacing:.1em;
-  text-transform:uppercase; color:var(--muted); border-bottom:2px solid var(--ink); padding:7px 8px; }
-td { border-bottom:1px solid var(--rule); padding:6px 8px; }
-td.num, th.num { font-family:ui-monospace,Menlo,monospace; text-align:right; }
+.kpi-value { font:700 17px/1.35 var(--mono); margin-top:5px; letter-spacing:-.01em; }
+.neg { color:var(--bad); } .pos { color:var(--good); }
+
+h2 { font:700 16px var(--serif); margin:22px 0 10px; display:flex;
+  align-items:baseline; gap:8px; }
+h2 small { font:500 10px var(--mono); letter-spacing:.1em; text-transform:uppercase;
+  color:var(--muted); }
+
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.chartbox { background:var(--card); border:1px solid var(--rule); border-radius:10px;
+  padding:12px 12px 8px; overflow:hidden; }
+.chartbox h3 { margin:0 0 8px; font:600 9.5px/1 var(--mono); letter-spacing:.1em;
+  text-transform:uppercase; color:var(--muted); display:flex; justify-content:space-between; }
+.chartbox h3 .latest { color:var(--ink); letter-spacing:0; }
+
+.tablewrap { overflow-x:auto; border:1px solid var(--rule); border-radius:10px;
+  background:var(--card); }
+table { width:100%; border-collapse:collapse; font-size:12.5px; }
+th { text-align:left; font:600 8.5px/1.3 var(--mono); letter-spacing:.1em;
+  text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--ink);
+  padding:9px 10px; background:var(--card); }
+td { border-bottom:1px solid var(--rule); padding:7px 10px; white-space:nowrap; }
+tr:last-child td { border-bottom:0; }
+td:first-child, th:first-child { position:sticky; left:0; background:var(--card);
+  box-shadow:1px 0 0 var(--rule); }
+td.num, th.num { font-family:var(--mono); text-align:right; font-size:12px; }
 td.best { color:var(--good); font-weight:700; }
-.tablewrap { overflow-x:auto; border:1px solid var(--rule); }
-select { padding:9px 10px; border:1px solid var(--rule); background:var(--card);
-  font:600 13px ui-monospace,Menlo,monospace; color:var(--ink); }
-.empty { padding:30px 16px; border:1px dashed var(--rule); color:var(--muted);
-  text-align:center; font-size:14px; }
-.linkout { font:12px ui-monospace,Menlo,monospace; }
-footer { margin-top:36px; font:10px/1.6 ui-monospace,Menlo,monospace; color:#8A939C; }
+
+.selrow { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.selrow label { font:600 9px/1 var(--mono); letter-spacing:.12em;
+  text-transform:uppercase; color:var(--muted); }
+select { padding:9px 12px; border:1px solid var(--rule); border-radius:8px;
+  background:var(--card); font:600 12.5px var(--mono); color:var(--ink); outline:none; }
+select:focus { border-color:var(--accent); }
+
+.empty { padding:36px 16px; border:1px dashed var(--rule); border-radius:10px;
+  color:var(--muted); text-align:center; font-size:14px; background:var(--card); }
+.note { font:10.5px/1.6 var(--mono); color:var(--muted); margin-top:8px; }
+footer { margin-top:40px; font:9.5px/1.7 var(--mono); color:#9AA2AA; }
+footer a { color:var(--muted); }
 @media (max-width:720px) { .grid { grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
 <div class="wrap">
 <header>
-  <div class="eyebrow">SEC EDGAR XBRL · client-side pipeline</div>
-  <h1>fundamentals-engine</h1>
-  <div class="sub">Add any US filer by ticker · ~120 prebuilt, rest fetched from EDGAR ·
-    edit <a href="https://github.com/RansomTrader/fundamentals-engine/edit/main/universe.txt">universe.txt</a> to prebuild more ·
-    <span class="linkout"><a href="dashboard.html">weekly static report →</a></span></div>
+  <div class="brand">fundamentals<span class="dot">·</span>engine</div>
+  <div class="hdr-meta">SEC EDGAR + yfinance<br>
+    <a href="dashboard.html">static report</a> ·
+    <a href="https://github.com/RansomTrader/fundamentals-engine/edit/main/universe.txt">universe.txt</a>
+  </div>
 </header>
 
 <nav>
-  <button id="tab-companies" class="active" onclick="showTab('companies')">Companies</button>
+  <button id="tab-companies" class="active" onclick="showTab('companies')">Fundamentals</button>
+  <button id="tab-market" onclick="showTab('market')">Market</button>
   <button id="tab-compare" onclick="showTab('compare')">Compare</button>
 </nav>
 
 <div class="addrow">
-  <input id="ticker-input" placeholder="TICKER (e.g. INTC)" maxlength="8"
-         onkeydown="if(event.key==='Enter')addCompany()">
+  <input id="ticker-input" placeholder="Add ticker — INTC, NVDA, MSTR…" maxlength="8"
+         autocomplete="off" onkeydown="if(event.key==='Enter')addCompany()">
   <button onclick="addCompany()">Add</button>
 </div>
 <div id="status" class="status"></div>
 <div id="chips" class="chips"></div>
 
-<div id="view-companies"></div>
-<div id="view-compare" style="display:none"></div>
+<div id="view-companies" class="view"></div>
+<div id="view-market" class="view" style="display:none"></div>
+<div id="view-compare" class="view" style="display:none"></div>
 
-<footer>Source: SEC EDGAR companyfacts (10-K / 20-F, as filed), fetched live in your
-browser. Ratios computed client-side; concept-tag fallbacks and restatement-aware
-dedupe mirror the Python pipeline. Not investment advice.</footer>
+<footer>Fundamentals: SEC EDGAR companyfacts (10-K / 20-F, as filed), ratios computed
+in-app · Market data: yfinance via daily CI build · Not investment advice ·
+<a href="https://github.com/RansomTrader/fundamentals-engine">source</a></footer>
 </div>
 
 <script>
@@ -129,14 +182,14 @@ const METRICS = {
   net_income_growth:"Net income growth YoY", revenue:"Revenue",
   net_income:"Net income", free_cash_flow:"Free cash flow",
 };
-const PALETTE = ["#0B5FA5","#B54834","#2E7D5B","#8A6D1F","#5B4B8A","#1F7A8C","#7A4B2B","#4B5563"];
+const PALETTE = ["#0B5FA5","#B5402F","#1E7A54","#8A6D1F","#5B4B8A","#1F7A8C","#7A4B2B","#4B5563"];
 
 /* ---------- state ---------- */
-let tickersMap = null;              // TICKER -> {cik, name}
-let companies = loadState();        // TICKER -> {name, rows:[{fiscal_year, ...}]}
+let tickersMap = null;
+let companies = loadState();
 let selected = Object.keys(companies)[0] || null;
 let compareMetric = "operating_margin";
-let charts = [];
+const marketCache = {};
 
 function loadState() {
   try { return JSON.parse(localStorage.getItem("fe_companies_v2")) || {}; }
@@ -146,7 +199,7 @@ function saveState() {
   try { localStorage.setItem("fe_companies_v2", JSON.stringify(companies)); } catch {}
 }
 
-/* ---------- data ---------- */
+/* ---------- fundamentals data ---------- */
 async function loadTickerMap() {
   if (tickersMap) return tickersMap;
   const r = await fetch("tickers.json");
@@ -185,7 +238,7 @@ function normalize(facts) {
       if (!recs.length) continue;
       const byFy = {};
       recs.sort((a,b) => (a.filed||"").localeCompare(b.filed||""));
-      for (const r of recs) byFy[r.fy] = r.val;   // latest filed wins
+      for (const r of recs) byFy[r.fy] = r.val;
       for (const [fy, val] of Object.entries(byFy))
         (rows[fy] = rows[fy] || {})[metric] = val;
       break;
@@ -220,7 +273,7 @@ function computeRatios(rows) {
     r.debt_to_equity = div(r.total_debt, r.equity);
     r.interest_coverage = div(r.operating_income, r.interest_expense);
     r.asset_turnover = div(r.revenue, r.assets);
-    r.revenue_growth = prev ? div((r.revenue ?? null) !== null && prev.revenue != null
+    r.revenue_growth = prev ? div(r.revenue != null && prev.revenue != null
       ? r.revenue - prev.revenue : null, prev.revenue) : null;
     r.net_income_growth = prev ? div(r.net_income != null && prev.net_income != null
       ? r.net_income - prev.net_income : null, prev.net_income) : null;
@@ -233,20 +286,17 @@ async function addCompany() {
   const input = document.getElementById("ticker-input");
   const t = input.value.trim().toUpperCase();
   if (!t) return;
-  setStatus(`Looking up ${t}…`);
   try {
-    const map = await loadTickerMap();
-    const meta = map[t];
-    if (!meta) { setStatus(`${t} not found in SEC ticker list`, true); return; }
-    let entry = null;
-    // 1) Prebuilt compact data (a few KB — built weekly by CI for the universe)
     setStatus(`Loading ${t}…`);
+    let entry = null;
     const pre = await fetch(`data/${t}.json`).catch(() => null);
     if (pre && pre.ok) {
       entry = await pre.json();
     } else {
-      // 2) Fallback: EDGAR via CORS relay (data.sec.gov blocks direct browser calls)
-      setStatus(`${t} not prebuilt — fetching from EDGAR via relay (10s+ on mobile)…`);
+      const map = await loadTickerMap();
+      const meta = map[t];
+      if (!meta) { setStatus(`${t} not found in SEC ticker list`, true); return; }
+      setStatus(`${t} not prebuilt — fetching from EDGAR via relay…`);
       const cik = String(meta.cik).padStart(10, "0");
       const edgarUrl = `https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`;
       const r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(edgarUrl)}`);
@@ -258,7 +308,7 @@ async function addCompany() {
     if (!entry.rows || !entry.rows.length) { setStatus(`${t}: no data`, true); return; }
     companies[t] = entry;
     selected = t; saveState(); input.value = "";
-    setStatus(`${t} added — ${companies[t].rows.length} fiscal years`);
+    setStatus("");
     render();
   } catch (err) { setStatus(`${t}: ${err.message}`, true); }
 }
@@ -270,41 +320,54 @@ function removeCompany(t, ev) {
   saveState(); render();
 }
 
+/* ---------- market data ---------- */
+async function loadMarket(t) {
+  if (marketCache[t]) return marketCache[t];
+  let m = null;
+  const pre = await fetch(`market/${t}.json`).catch(() => null);
+  if (pre && pre.ok) {
+    m = await pre.json();
+  } else {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${t}?range=5y&interval=1wk`;
+    const r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+    if (!r.ok) throw new Error("market data unavailable");
+    const j = await r.json();
+    const res = j.chart && j.chart.result && j.chart.result[0];
+    if (!res) throw new Error("market data unavailable");
+    const closes = res.indicators.quote[0].close;
+    m = {
+      price: res.meta.regularMarketPrice,
+      market_cap: null, year_high: null, year_low: null,
+      history: (res.timestamp || []).map((ts, i) => [ts * 1000, closes[i]])
+        .filter(p => p[1] != null),
+      asof: new Date().toISOString().slice(0, 10),
+    };
+  }
+  marketCache[t] = m;
+  return m;
+}
+
 /* ---------- formatting ---------- */
 function fmt(v, metric) {
   if (v == null || Number.isNaN(v)) return "—";
   if (PCT.has(metric)) return (v*100).toFixed(1) + "%";
   const a = Math.abs(v);
+  if (a >= 1e12) return "$" + (v/1e12).toFixed(2) + "T";
   if (a >= 1e9) return "$" + (v/1e9).toFixed(1) + "B";
   if (a >= 1e6) return "$" + (v/1e6).toFixed(0) + "M";
   return v.toFixed(2);
 }
-function setStatus(msg, err) {
-  const el = document.getElementById("status");
-  el.textContent = msg; el.className = "status" + (err ? " err" : "");
+function signed(v, metric) {
+  const cls = (v != null && PCT.has(metric)) ? (v < 0 ? "neg" : "") : "";
+  return `<span class="${cls}">${fmt(v, metric)}</span>`;
 }
-
-/* ---------- rendering ---------- */
-function showTab(tab) {
-  document.getElementById("tab-companies").className = tab === "companies" ? "active" : "";
-  document.getElementById("tab-compare").className = tab === "compare" ? "active" : "";
-  document.getElementById("view-companies").style.display = tab === "companies" ? "" : "none";
-  document.getElementById("view-compare").style.display = tab === "compare" ? "" : "none";
-  render();
+function money(v, dec = 2) {
+  if (v == null || Number.isNaN(v)) return "—";
+  const a = Math.abs(v);
+  if (a >= 1e12) return "$" + (v/1e12).toFixed(2) + "T";
+  if (a >= 1e9) return "$" + (v/1e9).toFixed(1) + "B";
+  return "$" + v.toFixed(dec);
 }
-function activeTab() {
-  return document.getElementById("tab-compare").className === "active" ? "compare" : "companies";
-}
-
-function renderChips() {
-  const el = document.getElementById("chips");
-  el.innerHTML = Object.keys(companies).map(t =>
-    `<div class="chip ${t===selected?"sel":""}" onclick="selected='${t}';render()">
-       ${t}<span class="x" onclick="removeCompany('${t}',event)">✕</span></div>`).join("");
-}
-
-function destroyCharts() {}  // SVG charts are stateless
-
 function fmtAxis(v, pct) {
   if (pct) return v.toFixed(0) + "%";
   const a = Math.abs(v);
@@ -312,17 +375,22 @@ function fmtAxis(v, pct) {
   if (a >= 1e6) return (v/1e6).toFixed(0) + "M";
   return v.toFixed(a < 10 ? 1 : 0);
 }
+function setStatus(msg, err) {
+  const el = document.getElementById("status");
+  el.textContent = msg; el.className = "status" + (err ? " err" : "");
+}
 
-function lineChart(id, labels, datasets, pct) {
+/* ---------- SVG charts ---------- */
+function lineChart(id, labels, datasets, pct, opts = {}) {
   const el = document.getElementById(id);
   if (!el) return;
   const hasLegend = datasets.length > 1;
   const W = el.clientWidth || 320;
-  const H = (el.clientHeight || 190) - (hasLegend ? 16 : 0);
+  const H = (opts.height || el.clientHeight || 190) - (hasLegend ? 16 : 0);
   const padL = 46, padR = 10, padT = 8, padB = 20;
   const vals = datasets.flatMap(d => d.data).filter(v => v != null && isFinite(v));
   if (!vals.length) {
-    el.innerHTML = '<div class="sub" style="padding:20px 0">no data</div>';
+    el.innerHTML = '<div class="note" style="padding:20px 0">no data</div>';
     return;
   }
   let min = Math.min(...vals), max = Math.max(...vals);
@@ -334,44 +402,82 @@ function lineChart(id, labels, datasets, pct) {
   let svg = "";
   for (let k = 0; k < 4; k++) {
     const tv = min + (max - min) * k / 3, ty = y(tv);
-    svg += `<line x1="${padL}" y1="${ty}" x2="${W - padR}" y2="${ty}" stroke="#E7E3DB"/>`;
+    svg += `<line x1="${padL}" y1="${ty}" x2="${W - padR}" y2="${ty}" stroke="#EDEAE2"/>`;
     svg += `<text x="${padL - 6}" y="${ty + 3}" text-anchor="end" font-size="9"
-      font-family="ui-monospace,Menlo,monospace" fill="#5A6570">${fmtAxis(tv, pct)}</text>`;
+      font-family="ui-monospace,Menlo,monospace" fill="#8A939C">${opts.money ? fmtAxis(tv, false) : fmtAxis(tv, pct)}</text>`;
   }
   if (min < 0 && max > 0)
-    svg += `<line x1="${padL}" y1="${y(0)}" x2="${W - padR}" y2="${y(0)}" stroke="#B8B2A6"/>`;
-  const step = Math.ceil(labels.length / 8);
+    svg += `<line x1="${padL}" y1="${y(0)}" x2="${W - padR}" y2="${y(0)}" stroke="#C4BEB2"/>`;
+  const step = Math.ceil(labels.length / (opts.maxLabels || 8));
   labels.forEach((lab, i) => {
     if (i % step) return;
     svg += `<text x="${x(i)}" y="${H - 5}" text-anchor="middle" font-size="9"
-      font-family="ui-monospace,Menlo,monospace" fill="#5A6570">${lab.replace("FY","")}</text>`;
+      font-family="ui-monospace,Menlo,monospace" fill="#8A939C">${lab}</text>`;
   });
   for (const d of datasets) {
+    if (d.fill) {
+      let area = "", started = false, lastX = null;
+      d.data.forEach((v, i) => {
+        if (v == null || !isFinite(v)) return;
+        area += (started ? "L" : "M") + x(i).toFixed(1) + " " + y(v).toFixed(1);
+        started = true; lastX = x(i);
+      });
+      if (started) {
+        const firstX = x(d.data.findIndex(v => v != null && isFinite(v)));
+        svg += `<path d="${area}L${lastX.toFixed(1)} ${y(min).toFixed(1)}L${firstX.toFixed(1)} ${y(min).toFixed(1)}Z"
+          fill="${d.color}" opacity="0.08"/>`;
+      }
+    }
     let path = "", started = false;
     d.data.forEach((v, i) => {
       if (v == null || !isFinite(v)) { started = false; return; }
       path += (started ? "L" : "M") + x(i).toFixed(1) + " " + y(v).toFixed(1);
       started = true;
     });
-    svg += `<path d="${path}" fill="none" stroke="${d.color}" stroke-width="2"/>`;
-    d.data.forEach((v, i) => {
-      if (v != null && isFinite(v))
-        svg += `<circle cx="${x(i)}" cy="${y(v)}" r="2.5" fill="${d.color}"/>`;
-    });
+    svg += `<path d="${path}" fill="none" stroke="${d.color}" stroke-width="2"
+      stroke-linejoin="round"/>`;
+    if (!opts.noDots)
+      d.data.forEach((v, i) => {
+        if (v != null && isFinite(v))
+          svg += `<circle cx="${x(i)}" cy="${y(v)}" r="2.5" fill="${d.color}"/>`;
+      });
   }
   const legend = hasLegend
     ? `<div style="display:flex;gap:10px;flex-wrap:wrap;font:9px ui-monospace,Menlo,monospace;
-        color:#5A6570">${datasets.map(d =>
+        color:#66707A">${datasets.map(d =>
         `<span><span style="color:${d.color}">&#9679;</span> ${d.label}</span>`).join("")}</div>`
     : "";
   el.innerHTML = `<svg width="${W}" height="${H}">${svg}</svg>${legend}`;
 }
 
+/* ---------- rendering ---------- */
+const TABS = ["companies","market","compare"];
+function showTab(tab) {
+  for (const t of TABS) {
+    document.getElementById("tab-" + t).className = t === tab ? "active" : "";
+    document.getElementById("view-" + t).style.display = t === tab ? "" : "none";
+  }
+  render();
+}
+function activeTab() {
+  return TABS.find(t => document.getElementById("tab-" + t).className === "active");
+}
+
+function renderChips() {
+  const el = document.getElementById("chips");
+  el.innerHTML = Object.keys(companies).map(t =>
+    `<div class="chip ${t===selected?"sel":""}" onclick="selected='${t}';render()">
+       ${t}<span class="x" onclick="removeCompany('${t}',event)">✕</span></div>`).join("");
+}
+
+function emptyState(msg) {
+  return `<div class="empty">${msg}</div>`;
+}
+
 function renderCompanies() {
   const view = document.getElementById("view-companies");
   if (!selected) {
-    view.innerHTML = `<div class="empty">Add a ticker above to pull its as-filed
-      fundamentals straight from SEC EDGAR.</div>`;
+    view.innerHTML = emptyState("Add a ticker to pull its as-filed fundamentals from SEC EDGAR.");
     return;
   }
   const c = companies[selected];
@@ -384,25 +490,29 @@ function renderCompanies() {
     ["c-gm","gross_margin","Gross margin"],
     ["c-om","operating_margin","Operating margin"],
     ["c-fcf","fcf_margin","FCF margin"]];
-  const ratioCols = Object.keys(METRICS);
   view.innerHTML = `
-    <div class="sub" style="margin-bottom:4px">${c.name} · FY${latest.fiscal_year} snapshot</div>
-    <div class="kpis">${kpiDefs.map(([l,m]) =>
-      `<div class="kpi"><div class="kpi-label">${l}</div>
-       <div class="kpi-value">${fmt(latest[m], m)}</div></div>`).join("")}</div>
-    <h2>Trends</h2>
-    <div class="grid">${trendDefs.map(([id,,title]) =>
-      `<div class="chartbox"><h3>${title}</h3>
-       <div style="height:190px" id="${id}"></div></div>`).join("")}</div>
+    <div class="co-name"><b>${c.name}</b> · FY${latest.fiscal_year}</div>
+    <div class="kpis">${kpiDefs.map(([l,m]) => {
+      const neg = latest[m] != null && latest[m] < 0 &&
+        (PCT.has(m) || m === "net_income");
+      return `<div class="kpi"><div class="kpi-label">${l}</div>
+       <div class="kpi-value ${neg?"neg":""}">${fmt(latest[m], m)}</div></div>`;
+    }).join("")}</div>
+    <h2>Trends <small>fiscal years</small></h2>
+    <div class="grid">${trendDefs.map(([id, metric, title]) => {
+      const v = latest[metric];
+      return `<div class="chartbox"><h3><span>${title}</span>
+        <span class="latest">${fmt(v, metric)}</span></h3>
+        <div style="height:180px" id="${id}"></div></div>`;
+    }).join("")}</div>
     <h2>All years</h2>
     <div class="tablewrap"><table><thead><tr><th>Metric</th>
       ${c.rows.map(r => `<th class="num">FY${r.fiscal_year}</th>`).join("")}
     </tr></thead><tbody>
-      ${ratioCols.map(m => `<tr><td>${METRICS[m]}</td>
-        ${c.rows.map(r => `<td class="num">${fmt(r[m], m)}</td>`).join("")}</tr>`).join("")}
+      ${Object.keys(METRICS).map(m => `<tr><td>${METRICS[m]}</td>
+        ${c.rows.map(r => `<td class="num">${signed(r[m], m)}</td>`).join("")}</tr>`).join("")}
     </tbody></table></div>`;
-  destroyCharts();
-  const labels = c.rows.map(r => "FY" + r.fiscal_year);
+  const labels = c.rows.map(r => String(r.fiscal_year).slice(2));
   for (const [id, metric] of trendDefs.map(d => [d[0], d[1]])) {
     const pct = PCT.has(metric);
     lineChart(id, labels, [{
@@ -412,25 +522,79 @@ function renderCompanies() {
   }
 }
 
+async function renderMarket() {
+  const view = document.getElementById("view-market");
+  if (!selected) {
+    view.innerHTML = emptyState("Add a company, then view its market data here.");
+    return;
+  }
+  const c = companies[selected];
+  view.innerHTML = `<div class="co-name"><b>${c.name}</b> · loading market data…</div>`;
+  let m;
+  try { m = await loadMarket(selected); }
+  catch (e) {
+    view.innerHTML = `<div class="co-name"><b>${c.name}</b></div>` +
+      emptyState(`Market data unavailable for ${selected} (${e.message}).`);
+    return;
+  }
+  if (activeTab() !== "market") return;
+  const latest = c.rows[c.rows.length - 1];
+  const pe = div(m.price, latest.eps_diluted);
+  const ps = div(m.market_cap, latest.revenue);
+  const pfcf = div(m.market_cap, latest.free_cash_flow);
+  const fcfYield = pfcf != null && pfcf !== 0 ? 1 / pfcf : null;
+  const kpis = [
+    ["Price", money(m.price)],
+    ["Market cap", money(m.market_cap)],
+    ["52W high", money(m.year_high)],
+    ["52W low", money(m.year_low)],
+    ["P/E (FY EPS)", pe == null || pe < 0 ? "—" : pe.toFixed(1) + "×"],
+    ["P/S", ps == null ? "—" : ps.toFixed(1) + "×"],
+    ["P/FCF", pfcf == null || pfcf < 0 ? "—" : pfcf.toFixed(1) + "×"],
+    ["FCF yield", fcfYield == null ? "—" : (fcfYield >= 0
+      ? (fcfYield*100).toFixed(1) + "%"
+      : `<span class="neg">${(fcfYield*100).toFixed(1)}%</span>`)],
+  ];
+  view.innerHTML = `
+    <div class="co-name"><b>${c.name}</b> · as of ${m.asof || "latest build"}</div>
+    <div class="kpis">${kpis.map(([l, v]) =>
+      `<div class="kpi"><div class="kpi-label">${l}</div>
+       <div class="kpi-value">${v}</div></div>`).join("")}</div>
+    <h2>Price <small>5y · weekly close</small></h2>
+    <div class="chartbox"><h3><span>${selected}</span>
+      <span class="latest">${money(m.price)}</span></h3>
+      <div style="height:250px" id="mkt-chart"></div></div>
+    <div class="note">Multiples pair the latest close with FY${latest.fiscal_year}
+      as-filed fundamentals — a deliberate simplification. Prices refresh each
+      weekday after US close via CI.</div>`;
+  const hist = (m.history || []);
+  const labels = hist.map(([ts]) => "’" + String(new Date(ts).getFullYear()).slice(2));
+  const dedupLabels = labels.map((l, i) => (i === 0 || l !== labels[i-1]) ? l : "");
+  lineChart("mkt-chart", dedupLabels.map((l,i) => labels[i]),
+    [{ label: selected, color: "#0B5FA5", fill: true,
+       data: hist.map(([, px]) => px) }],
+    false, { height: 250, noDots: true, maxLabels: 6, money: true });
+}
+
 function renderCompare() {
   const view = document.getElementById("view-compare");
   const tickers = Object.keys(companies);
   if (tickers.length < 2) {
-    view.innerHTML = `<div class="empty">Add at least two companies to compare.</div>`;
+    view.innerHTML = emptyState("Add at least two companies to compare.");
     return;
   }
   const commonFy = Math.min(...tickers.map(t =>
     Math.max(...companies[t].rows.map(r => r.fiscal_year))));
   view.innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-      <label class="sub">Metric</label>
+    <div class="selrow"><label>Metric</label>
       <select onchange="compareMetric=this.value;render()">
         ${Object.entries(METRICS).map(([m,l]) =>
           `<option value="${m}" ${m===compareMetric?"selected":""}>${l}</option>`).join("")}
       </select></div>
-    <div class="chartbox"><h3>${METRICS[compareMetric]} — all years</h3>
-      <div style="height:260px" id="cmp-chart"></div></div>
-    <h2>Snapshot · FY${commonFy}</h2>
+    <div class="chartbox"><h3><span>${METRICS[compareMetric]}</span>
+      <span class="latest">all years</span></h3>
+      <div style="height:250px" id="cmp-chart"></div></div>
+    <h2>Snapshot <small>FY${commonFy} · green = best in group</small></h2>
     <div class="tablewrap"><table><thead><tr><th>Metric</th>
       ${tickers.map(t => `<th class="num">${t}</th>`).join("")}
     </tr></thead><tbody>
@@ -446,28 +610,27 @@ function renderCompare() {
         return `<tr><td>${METRICS[m]}</td>${vals.map(v =>
           `<td class="num ${v != null && v === best ? "best" : ""}">${fmt(v, m)}</td>`).join("")}</tr>`;
       }).join("")}
-    </tbody></table></div>
-    <div class="sub" style="margin-top:8px">Green = best in group
-      (direction-aware: lower wins for debt/equity).</div>`;
-  destroyCharts();
+    </tbody></table></div>`;
   const allFy = [...new Set(tickers.flatMap(t =>
     companies[t].rows.map(r => r.fiscal_year)))].sort();
   const pct = PCT.has(compareMetric);
-  lineChart("cmp-chart", allFy.map(y => "FY" + y),
+  lineChart("cmp-chart", allFy.map(y => String(y).slice(2)),
     tickers.map((t, i) => ({
-      label: t,
+      label: t, color: PALETTE[i % PALETTE.length],
       data: allFy.map(y => {
         const row = companies[t].rows.find(r => r.fiscal_year === y);
         const v = row ? row[compareMetric] : null;
         return v == null ? null : v * (pct ? 100 : 1);
       }),
-      color: PALETTE[i % PALETTE.length],
-    })), pct);
+    })), pct, { height: 250 });
 }
 
 function render() {
   renderChips();
-  if (activeTab() === "companies") renderCompanies(); else renderCompare();
+  const tab = activeTab();
+  if (tab === "companies") renderCompanies();
+  else if (tab === "market") renderMarket();
+  else renderCompare();
 }
 render();
 </script>
