@@ -20,7 +20,7 @@ def main() -> None:
     ap.add_argument("--out", default="output/dashboard.html")
     ap.add_argument("--cache-dir", default="data")
     ap.add_argument("--no-prices", action="store_true",
-                    help="Skip Stooq price fetch / valuation multiples")
+                    help="Skip price fetch / valuation multiples")
     ap.add_argument("--force", action="store_true", help="Refetch EDGAR data")
     args = ap.parse_args()
 
@@ -36,7 +36,7 @@ def main() -> None:
 
     table = peers.peer_table(ratios, fiscal_year=last_fy)
     if not args.no_prices:
-        print("Fetching prices from Stooq...")
+        print("Fetching prices (yfinance, Stooq fallback)...")
         table = peers.add_valuation(table, {t: peers.latest_price(t) for t in tickers})
     ranks = peers.rank_vs_peers(table, args.subject)
 

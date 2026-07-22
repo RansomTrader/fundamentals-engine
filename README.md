@@ -1,9 +1,10 @@
-# Intel Fundamentals Pipeline
+# fundamentals-engine
 
 A reproducible financial-statement analysis pipeline built on primary-source data.
-It pulls as-filed 10-K figures from the **SEC EDGAR XBRL companyfacts API**, computes
-a full ratio suite, benchmarks **Intel (INTC)** against a semiconductor peer set
-(**AMD, NVDA, TSM** by default), and renders a self-contained HTML dashboard.
+It pulls as-filed 10-K figures from the **SEC EDGAR XBRL companyfacts API** and
+market data via **yfinance** (Stooq fallback), computes a full ratio suite,
+benchmarks any subject ticker against a peer set (default: **INTC** vs
+**AMD, NVDA, TSM**), and renders a self-contained HTML dashboard.
 
 Originated as a graduate financial statement analysis project (USF M.S. Financial
 Technology, FIN 6465) and rebuilt as code so every number is traceable to a filing
@@ -20,8 +21,8 @@ the analysis as software:
   different us-gaap tags.
 - **Restatement-aware** — when the same fiscal year appears in multiple filings, the
   most recently filed value wins.
-- **Graceful degradation** — missing concepts produce NaN, never a crash; price data
-  (Stooq, keyless) is optional and the operating comparison runs without it.
+- **Graceful degradation** — missing concepts produce NaN, never a crash; market data
+  (yfinance, Stooq fallback) is optional and the operating comparison runs without it.
 
 ## What it computes
 
@@ -32,7 +33,7 @@ the analysis as software:
 | Liquidity | current ratio, quick ratio |
 | Leverage | debt/equity, interest coverage |
 | Efficiency & growth | asset turnover, revenue & net income growth (YoY) |
-| Valuation (optional) | P/E, P/S, P/FCF from Stooq closes |
+| Valuation (optional) | P/E, P/S, P/FCF from latest closes (yfinance / Stooq) |
 
 Output: a single-file HTML dashboard (KPI strip, 5-year trend charts, peer bar
 charts, direction-aware peer rankings) plus a tidy `ratios.csv`.
@@ -58,6 +59,7 @@ python -m fundamentals.cli --subject NVDA --peers AMD INTC QCOM --no-prices
 src/fundamentals/
   edgar.py    # fetch + cache companyfacts JSON; normalize to tidy annual rows
   metrics.py  # ratio computation (pure functions, NaN-safe)
+  market.py   # yfinance prices/snapshots with keyless Stooq fallback
   peers.py    # peer snapshot table, valuation multiples, direction-aware ranking
   report.py   # matplotlib charts -> base64 -> single-file HTML dashboard
   cli.py      # argparse entry point

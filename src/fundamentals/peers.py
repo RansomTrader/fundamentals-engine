@@ -1,30 +1,16 @@
 """Peer benchmarking and valuation multiples.
 
-Prices come from Stooq's free daily CSV endpoint (no API key). If the
-network call fails, valuation multiples are skipped gracefully and the
+Prices come from the market module (yfinance primary, Stooq fallback).
+If both fail, valuation multiples are skipped gracefully and the
 operating comparison still runs.
 """
 from __future__ import annotations
 
-import io
-
 import numpy as np
 import pandas as pd
-import requests
 
+from .market import latest_price  # noqa: F401  (re-exported for CLI use)
 from .metrics import RATIO_COLUMNS
-
-STOOQ_URL = "https://stooq.com/q/d/l/?s={symbol}.us&i=d"
-
-
-def latest_price(ticker: str) -> float | None:
-    try:
-        resp = requests.get(STOOQ_URL.format(symbol=ticker.lower()), timeout=15)
-        resp.raise_for_status()
-        px = pd.read_csv(io.StringIO(resp.text))
-        return float(px["Close"].iloc[-1])
-    except Exception:
-        return None
 
 
 def peer_table(ratios: pd.DataFrame, fiscal_year: int | None = None) -> pd.DataFrame:
