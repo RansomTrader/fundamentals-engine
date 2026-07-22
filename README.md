@@ -38,6 +38,17 @@ the analysis as software:
 Output: a single-file HTML dashboard (KPI strip, 5-year trend charts, peer bar
 charts, direction-aware peer rankings) plus a tidy `ratios.csv`.
 
+## Interactive app
+
+The published site (GitHub Pages) is a client-side SPA (`app/index.html`) that
+fetches EDGAR companyfacts **directly in the browser** — add any US filer by
+ticker, view its individual fundamentals (KPIs, trends, full ratio history), and
+switch to the **Compare** tab for multi-company charts and a direction-aware
+best-in-group snapshot table. The ratio logic is a JS port of `metrics.py`;
+`scripts/build_tickers.py` publishes the SEC ticker→CIK map at build time so
+lookup works offline from EDGAR's search. Added companies persist in
+localStorage. The CI-generated static report remains at `/dashboard.html`.
+
 ## Quick start
 
 ```bash

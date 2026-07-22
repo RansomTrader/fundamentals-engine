@@ -32,8 +32,10 @@ jobs:
           cd src && python -m fundamentals.cli \
             --subject INTC --peers AMD NVDA TSM \
             --out ../output/dashboard.html --cache-dir ../data
+      - name: Build ticker map
+        run: python scripts/build_tickers.py
       - name: Stage site
-        run: cp output/dashboard.html output/index.html
+        run: cp app/index.html output/index.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: output

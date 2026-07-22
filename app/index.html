@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>fundamentals-engine</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+<style>
+:root { --ink:#16212B; --paper:#F7F6F2; --accent:#0B5FA5; --rule:#D8D4CC;
+  --muted:#5A6570; --good:#2E7D5B; --bad:#B54834; --card:#FFFFFF; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--paper); color:var(--ink);
+  font:15px/1.55 Georgia,'Times New Roman',serif; }
+.wrap { max-width:1060px; margin:0 auto; padding:20px 16px 80px; }
+header { border-bottom:3px solid var(--ink); padding-bottom:12px; }
+.eyebrow { font:600 10px/1 ui-monospace,Menlo,monospace; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--accent); }
+h1 { margin:6px 0 2px; font-size:26px; letter-spacing:-.01em; }
+.sub { color:var(--muted); font-size:13px; }
+nav { display:flex; gap:0; margin:18px 0 20px; border:1px solid var(--rule); }
+nav button { flex:1; padding:11px 0; background:var(--paper); border:0;
+  border-right:1px solid var(--rule); font:600 12px/1 ui-monospace,Menlo,monospace;
+  letter-spacing:.12em; text-transform:uppercase; color:var(--muted); cursor:pointer; }
+nav button:last-child { border-right:0; }
+nav button.active { background:var(--ink); color:var(--paper); }
+.addrow { display:flex; gap:8px; margin-bottom:14px; }
+.addrow input { flex:1; padding:11px 12px; border:1px solid var(--rule);
+  background:var(--card); font:600 15px ui-monospace,Menlo,monospace;
+  text-transform:uppercase; color:var(--ink); outline-color:var(--accent); }
+.addrow button { padding:11px 20px; border:0; background:var(--accent); color:#fff;
+  font:600 12px/1 ui-monospace,Menlo,monospace; letter-spacing:.1em; cursor:pointer; }
+.status { font:12px ui-monospace,Menlo,monospace; color:var(--muted); min-height:18px; margin-bottom:8px; }
+.status.err { color:var(--bad); }
+.chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
+.chip { display:flex; align-items:center; gap:8px; padding:7px 10px;
+  border:1px solid var(--rule); background:var(--card);
+  font:600 13px ui-monospace,Menlo,monospace; cursor:pointer; }
+.chip.sel { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+.chip .x { color:var(--muted); cursor:pointer; padding:0 2px; }
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr));
+  gap:1px; background:var(--rule); border:1px solid var(--rule); margin:14px 0 20px; }
+.kpi { background:var(--card); padding:10px 12px; }
+.kpi-label { font:600 9px/1.3 ui-monospace,Menlo,monospace; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--muted); }
+.kpi-value { font:600 18px/1.3 ui-monospace,Menlo,monospace; margin-top:5px; }
+h2 { font-size:18px; border-top:1px solid var(--rule); padding-top:16px; margin:24px 0 12px; }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.chartbox { background:var(--card); border:1px solid var(--rule); padding:10px; }
+.chartbox h3 { margin:0 0 6px; font:600 11px/1 ui-monospace,Menlo,monospace;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+table { width:100%; border-collapse:collapse; font-size:13px; background:var(--card); }
+th { text-align:left; font:600 9px/1.3 ui-monospace,Menlo,monospace; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--muted); border-bottom:2px solid var(--ink); padding:7px 8px; }
+td { border-bottom:1px solid var(--rule); padding:6px 8px; }
+td.num, th.num { font-family:ui-monospace,Menlo,monospace; text-align:right; }
+td.best { color:var(--good); font-weight:700; }
+.tablewrap { overflow-x:auto; border:1px solid var(--rule); }
+select { padding:9px 10px; border:1px solid var(--rule); background:var(--card);
+  font:600 13px ui-monospace,Menlo,monospace; color:var(--ink); }
+.empty { padding:30px 16px; border:1px dashed var(--rule); color:var(--muted);
+  text-align:center; font-size:14px; }
+.linkout { font:12px ui-monospace,Menlo,monospace; }
+footer { margin-top:36px; font:10px/1.6 ui-monospace,Menlo,monospace; color:#8A939C; }
+@media (max-width:720px) { .grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">SEC EDGAR XBRL · client-side pipeline</div>
+  <h1>fundamentals-engine</h1>
+  <div class="sub">Add any US filer by ticker · data fetched as-filed from EDGAR ·
+    <span class="linkout"><a href="dashboard.html">weekly static report →</a></span></div>
+</header>
+
+<nav>
+  <button id="tab-companies" class="active" onclick="showTab('companies')">Companies</button>
+  <button id="tab-compare" onclick="showTab('compare')">Compare</button>
+</nav>
+
+<div class="addrow">
+  <input id="ticker-input" placeholder="TICKER (e.g. INTC)" maxlength="8"
+         onkeydown="if(event.key==='Enter')addCompany()">
+  <button onclick="addCompany()">Add</button>
+</div>
+<div id="status" class="status"></div>
+<div id="chips" class="chips"></div>
+
+<div id="view-companies"></div>
+<div id="view-compare" style="display:none"></div>
+
+<footer>Source: SEC EDGAR companyfacts (10-K / 20-F, as filed), fetched live in your
+browser. Ratios computed client-side; concept-tag fallbacks and restatement-aware
+dedupe mirror the Python pipeline. Not investment advice.</footer>
+</div>
+
+<script>
+/* ---------- concept map (mirrors src/fundamentals/edgar.py) ---------- */
+const CONCEPTS = {
+  revenue: ["RevenueFromContractWithCustomerExcludingAssessedTax","Revenues","SalesRevenueNet"],
+  cost_of_revenue: ["CostOfRevenue","CostOfGoodsAndServicesSold","CostOfGoodsSold"],
+  gross_profit: ["GrossProfit"],
+  operating_income: ["OperatingIncomeLoss"],
+  net_income: ["NetIncomeLoss"],
+  rnd_expense: ["ResearchAndDevelopmentExpense"],
+  interest_expense: ["InterestExpense","InterestExpenseNonoperating","InterestExpenseDebt"],
+  assets: ["Assets"], current_assets: ["AssetsCurrent"],
+  current_liabilities: ["LiabilitiesCurrent"], inventory: ["InventoryNet"],
+  equity: ["StockholdersEquity","StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"],
+  total_debt_lt: ["LongTermDebtNoncurrent","LongTermDebt"],
+  total_debt_st: ["LongTermDebtCurrent","DebtCurrent"],
+  cash: ["CashAndCashEquivalentsAtCarryingValue"],
+  operating_cash_flow: ["NetCashProvidedByUsedInOperatingActivities"],
+  capex: ["PaymentsToAcquirePropertyPlantAndEquipment","PaymentsToAcquireProductiveAssets"],
+  eps_diluted: ["EarningsPerShareDiluted","EarningsPerShareBasic"],
+};
+const INSTANT = new Set(["assets","current_assets","current_liabilities","inventory",
+  "equity","total_debt_lt","total_debt_st","cash"]);
+const ANNUAL_FORMS = new Set(["10-K","20-F"]);
+const PCT = new Set(["gross_margin","operating_margin","net_margin","fcf_margin",
+  "rnd_intensity","roe","roa","revenue_growth","net_income_growth"]);
+const LOWER_BETTER = new Set(["debt_to_equity"]);
+const METRICS = {
+  gross_margin:"Gross margin", operating_margin:"Operating margin",
+  net_margin:"Net margin", fcf_margin:"FCF margin", rnd_intensity:"R&D intensity",
+  roe:"ROE", roa:"ROA", current_ratio:"Current ratio", quick_ratio:"Quick ratio",
+  debt_to_equity:"Debt / equity", interest_coverage:"Interest coverage",
+  asset_turnover:"Asset turnover", revenue_growth:"Revenue growth YoY",
+  net_income_growth:"Net income growth YoY", revenue:"Revenue",
+  net_income:"Net income", free_cash_flow:"Free cash flow",
+};
+const PALETTE = ["#0B5FA5","#B54834","#2E7D5B","#8A6D1F","#5B4B8A","#1F7A8C","#7A4B2B","#4B5563"];
+
+/* ---------- state ---------- */
+let tickersMap = null;              // TICKER -> {cik, name}
+let companies = loadState();        // TICKER -> {name, rows:[{fiscal_year, ...}]}
+let selected = Object.keys(companies)[0] || null;
+let compareMetric = "operating_margin";
+let charts = [];
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem("fe_companies_v2")) || {}; }
+  catch { return {}; }
+}
+function saveState() {
+  try { localStorage.setItem("fe_companies_v2", JSON.stringify(companies)); } catch {}
+}
+
+/* ---------- data ---------- */
+async function loadTickerMap() {
+  if (tickersMap) return tickersMap;
+  const r = await fetch("tickers.json");
+  if (!r.ok) throw new Error("ticker map missing — CI build may still be running");
+  tickersMap = await r.json();
+  return tickersMap;
+}
+
+function annualRecords(units, instant) {
+  const out = [];
+  for (const [unit, entries] of Object.entries(units || {})) {
+    if (!["USD","shares","USD/shares"].includes(unit)) continue;
+    for (const e of entries) {
+      if (!ANNUAL_FORMS.has(e.form)) continue;
+      if (instant) { if (e.fp !== "FY") continue; }
+      else {
+        if (!e.start || !e.end) continue;
+        const days = (new Date(e.end) - new Date(e.start)) / 864e5;
+        if (days < 340 || days > 380) continue;
+      }
+      if (e.fy == null) continue;
+      out.push(e);
+    }
+  }
+  return out;
+}
+
+function normalize(facts) {
+  const gaap = (facts.facts || {})["us-gaap"] || {};
+  const rows = {};
+  for (const [metric, tags] of Object.entries(CONCEPTS)) {
+    const instant = INSTANT.has(metric);
+    for (const tag of tags) {
+      if (!gaap[tag]) continue;
+      const recs = annualRecords(gaap[tag].units, instant);
+      if (!recs.length) continue;
+      const byFy = {};
+      recs.sort((a,b) => (a.filed||"").localeCompare(b.filed||""));
+      for (const r of recs) byFy[r.fy] = r.val;   // latest filed wins
+      for (const [fy, val] of Object.entries(byFy))
+        (rows[fy] = rows[fy] || {})[metric] = val;
+      break;
+    }
+  }
+  return Object.entries(rows)
+    .map(([fy, vals]) => ({ fiscal_year: +fy, ...vals }))
+    .sort((a,b) => a.fiscal_year - b.fiscal_year);
+}
+
+const div = (a,b) => (a==null || b==null || b===0) ? null : a/b;
+
+function computeRatios(rows) {
+  let prev = null;
+  for (const r of rows) {
+    if (r.gross_profit == null && r.revenue != null && r.cost_of_revenue != null)
+      r.gross_profit = r.revenue - r.cost_of_revenue;
+    r.total_debt = (r.total_debt_lt ?? 0) + (r.total_debt_st ?? 0);
+    if (r.total_debt_lt == null && r.total_debt_st == null) r.total_debt = null;
+    r.free_cash_flow = (r.operating_cash_flow != null && r.capex != null)
+      ? r.operating_cash_flow - r.capex : null;
+    r.gross_margin = div(r.gross_profit, r.revenue);
+    r.operating_margin = div(r.operating_income, r.revenue);
+    r.net_margin = div(r.net_income, r.revenue);
+    r.fcf_margin = div(r.free_cash_flow, r.revenue);
+    r.rnd_intensity = div(r.rnd_expense, r.revenue);
+    r.roe = div(r.net_income, r.equity);
+    r.roa = div(r.net_income, r.assets);
+    r.current_ratio = div(r.current_assets, r.current_liabilities);
+    r.quick_ratio = div((r.current_assets != null)
+      ? r.current_assets - (r.inventory ?? 0) : null, r.current_liabilities);
+    r.debt_to_equity = div(r.total_debt, r.equity);
+    r.interest_coverage = div(r.operating_income, r.interest_expense);
+    r.asset_turnover = div(r.revenue, r.assets);
+    r.revenue_growth = prev ? div((r.revenue ?? null) !== null && prev.revenue != null
+      ? r.revenue - prev.revenue : null, prev.revenue) : null;
+    r.net_income_growth = prev ? div(r.net_income != null && prev.net_income != null
+      ? r.net_income - prev.net_income : null, prev.net_income) : null;
+    prev = r;
+  }
+  return rows;
+}
+
+async function addCompany() {
+  const input = document.getElementById("ticker-input");
+  const t = input.value.trim().toUpperCase();
+  if (!t) return;
+  setStatus(`Looking up ${t}…`);
+  try {
+    const map = await loadTickerMap();
+    const meta = map[t];
+    if (!meta) { setStatus(`${t} not found in SEC ticker list`, true); return; }
+    setStatus(`Fetching ${t} filings from EDGAR (can take a few seconds)…`);
+    const cik = String(meta.cik).padStart(10, "0");
+    const r = await fetch(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`);
+    if (!r.ok) throw new Error(`EDGAR returned ${r.status}`);
+    const rows = computeRatios(normalize(await r.json()));
+    if (!rows.length) { setStatus(`${t}: no annual us-gaap data found`, true); return; }
+    companies[t] = { name: meta.name, rows: rows.slice(-8) };
+    selected = t; saveState(); input.value = "";
+    setStatus(`${t} added — ${companies[t].rows.length} fiscal years`);
+    render();
+  } catch (err) { setStatus(`${t}: ${err.message}`, true); }
+}
+
+function removeCompany(t, ev) {
+  ev.stopPropagation();
+  delete companies[t];
+  if (selected === t) selected = Object.keys(companies)[0] || null;
+  saveState(); render();
+}
+
+/* ---------- formatting ---------- */
+function fmt(v, metric) {
+  if (v == null || Number.isNaN(v)) return "—";
+  if (PCT.has(metric)) return (v*100).toFixed(1) + "%";
+  const a = Math.abs(v);
+  if (a >= 1e9) return "$" + (v/1e9).toFixed(1) + "B";
+  if (a >= 1e6) return "$" + (v/1e6).toFixed(0) + "M";
+  return v.toFixed(2);
+}
+function setStatus(msg, err) {
+  const el = document.getElementById("status");
+  el.textContent = msg; el.className = "status" + (err ? " err" : "");
+}
+
+/* ---------- rendering ---------- */
+function showTab(tab) {
+  document.getElementById("tab-companies").className = tab === "companies" ? "active" : "";
+  document.getElementById("tab-compare").className = tab === "compare" ? "active" : "";
+  document.getElementById("view-companies").style.display = tab === "companies" ? "" : "none";
+  document.getElementById("view-compare").style.display = tab === "compare" ? "" : "none";
+  render();
+}
+function activeTab() {
+  return document.getElementById("tab-compare").className === "active" ? "compare" : "companies";
+}
+
+function renderChips() {
+  const el = document.getElementById("chips");
+  el.innerHTML = Object.keys(companies).map(t =>
+    `<div class="chip ${t===selected?"sel":""}" onclick="selected='${t}';render()">
+       ${t}<span class="x" onclick="removeCompany('${t}',event)">✕</span></div>`).join("");
+}
+
+function destroyCharts() { charts.forEach(c => c.destroy()); charts = []; }
+
+function lineChart(canvasId, labels, datasets, pct) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  charts.push(new Chart(ctx, {
+    type: "line",
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: datasets.length > 1,
+        labels: { boxWidth: 10, font: { size: 10, family: "monospace" } } } },
+      scales: { y: { ticks: { callback: v => pct ? v.toFixed(0)+"%" : v,
+        font: { size: 10, family: "monospace" } } },
+        x: { ticks: { font: { size: 10, family: "monospace" } } } },
+    },
+  }));
+}
+
+function renderCompanies() {
+  const view = document.getElementById("view-companies");
+  if (!selected) {
+    view.innerHTML = `<div class="empty">Add a ticker above to pull its as-filed
+      fundamentals straight from SEC EDGAR.</div>`;
+    return;
+  }
+  const c = companies[selected];
+  const latest = c.rows[c.rows.length - 1];
+  const kpiDefs = [["Revenue","revenue"],["Net income","net_income"],
+    ["Gross margin","gross_margin"],["Op. margin","operating_margin"],
+    ["FCF margin","fcf_margin"],["ROE","roe"],
+    ["Current ratio","current_ratio"],["Debt / equity","debt_to_equity"]];
+  const trendDefs = [["c-rev","revenue_growth","Revenue growth YoY"],
+    ["c-gm","gross_margin","Gross margin"],
+    ["c-om","operating_margin","Operating margin"],
+    ["c-fcf","fcf_margin","FCF margin"]];
+  const ratioCols = Object.keys(METRICS);
+  view.innerHTML = `
+    <div class="sub" style="margin-bottom:4px">${c.name} · FY${latest.fiscal_year} snapshot</div>
+    <div class="kpis">${kpiDefs.map(([l,m]) =>
+      `<div class="kpi"><div class="kpi-label">${l}</div>
+       <div class="kpi-value">${fmt(latest[m], m)}</div></div>`).join("")}</div>
+    <h2>Trends</h2>
+    <div class="grid">${trendDefs.map(([id,,title]) =>
+      `<div class="chartbox"><h3>${title}</h3>
+       <div style="height:190px"><canvas id="${id}"></canvas></div></div>`).join("")}</div>
+    <h2>All years</h2>
+    <div class="tablewrap"><table><thead><tr><th>Metric</th>
+      ${c.rows.map(r => `<th class="num">FY${r.fiscal_year}</th>`).join("")}
+    </tr></thead><tbody>
+      ${ratioCols.map(m => `<tr><td>${METRICS[m]}</td>
+        ${c.rows.map(r => `<td class="num">${fmt(r[m], m)}</td>`).join("")}</tr>`).join("")}
+    </tbody></table></div>`;
+  destroyCharts();
+  const labels = c.rows.map(r => "FY" + r.fiscal_year);
+  for (const [id, metric] of trendDefs.map(d => [d[0], d[1]])) {
+    const pct = PCT.has(metric);
+    lineChart(id, labels, [{
+      data: c.rows.map(r => r[metric] == null ? null : r[metric] * (pct ? 100 : 1)),
+      borderColor: "#0B5FA5", backgroundColor: "#0B5FA5", pointRadius: 3, tension: 0.15,
+    }], pct);
+  }
+}
+
+function renderCompare() {
+  const view = document.getElementById("view-compare");
+  const tickers = Object.keys(companies);
+  if (tickers.length < 2) {
+    view.innerHTML = `<div class="empty">Add at least two companies to compare.</div>`;
+    return;
+  }
+  const commonFy = Math.min(...tickers.map(t =>
+    Math.max(...companies[t].rows.map(r => r.fiscal_year))));
+  view.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <label class="sub">Metric</label>
+      <select onchange="compareMetric=this.value;render()">
+        ${Object.entries(METRICS).map(([m,l]) =>
+          `<option value="${m}" ${m===compareMetric?"selected":""}>${l}</option>`).join("")}
+      </select></div>
+    <div class="chartbox"><h3>${METRICS[compareMetric]} — all years</h3>
+      <div style="height:260px"><canvas id="cmp-chart"></canvas></div></div>
+    <h2>Snapshot · FY${commonFy}</h2>
+    <div class="tablewrap"><table><thead><tr><th>Metric</th>
+      ${tickers.map(t => `<th class="num">${t}</th>`).join("")}
+    </tr></thead><tbody>
+      ${Object.keys(METRICS).map(m => {
+        const vals = tickers.map(t => {
+          const row = companies[t].rows.find(r => r.fiscal_year === commonFy);
+          return row ? row[m] : null;
+        });
+        const present = vals.filter(v => v != null);
+        let best = null;
+        if (present.length > 1)
+          best = LOWER_BETTER.has(m) ? Math.min(...present) : Math.max(...present);
+        return `<tr><td>${METRICS[m]}</td>${vals.map(v =>
+          `<td class="num ${v != null && v === best ? "best" : ""}">${fmt(v, m)}</td>`).join("")}</tr>`;
+      }).join("")}
+    </tbody></table></div>
+    <div class="sub" style="margin-top:8px">Green = best in group
+      (direction-aware: lower wins for debt/equity).</div>`;
+  destroyCharts();
+  const allFy = [...new Set(tickers.flatMap(t =>
+    companies[t].rows.map(r => r.fiscal_year)))].sort();
+  const pct = PCT.has(compareMetric);
+  lineChart("cmp-chart", allFy.map(y => "FY" + y),
+    tickers.map((t, i) => ({
+      label: t,
+      data: allFy.map(y => {
+        const row = companies[t].rows.find(r => r.fiscal_year === y);
+        const v = row ? row[compareMetric] : null;
+        return v == null ? null : v * (pct ? 100 : 1);
+      }),
+      borderColor: PALETTE[i % PALETTE.length],
+      backgroundColor: PALETTE[i % PALETTE.length],
+      pointRadius: 3, tension: 0.15, spanGaps: true,
+    })), pct);
+}
+
+function render() {
+  renderChips();
+  if (activeTab() === "companies") renderCompanies(); else renderCompare();
+}
+render();
+</script>
+</body>
+</html>

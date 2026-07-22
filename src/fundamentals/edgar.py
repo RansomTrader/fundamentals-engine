@@ -110,13 +110,13 @@ def fetch_companyfacts(
 
 
 def _annual_records(units_block: dict, instant: bool) -> list[dict]:
-    """Pick annual 10-K records from a concept's unit entries."""
+    """Pick annual records (10-K, or 20-F for foreign filers)."""
     out = []
     for unit, entries in units_block.items():
         if unit not in ("USD", "shares", "USD/shares"):
             continue
         for e in entries:
-            if e.get("form") != "10-K":
+            if e.get("form") not in ("10-K", "20-F"):
                 continue
             if instant:
                 # Balance-sheet values: keep fiscal-year-end instants
