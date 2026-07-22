@@ -69,7 +69,8 @@ footer { margin-top:36px; font:10px/1.6 ui-monospace,Menlo,monospace; color:#8A9
 <header>
   <div class="eyebrow">SEC EDGAR XBRL · client-side pipeline</div>
   <h1>fundamentals-engine</h1>
-  <div class="sub">Add any US filer by ticker · data fetched as-filed from EDGAR ·
+  <div class="sub">Add any US filer by ticker · ~120 prebuilt, rest fetched from EDGAR ·
+    edit <a href="https://github.com/RansomTrader/fundamentals-engine/edit/main/universe.txt">universe.txt</a> to prebuild more ·
     <span class="linkout"><a href="dashboard.html">weekly static report →</a></span></div>
 </header>
 
@@ -238,13 +239,25 @@ async function addCompany() {
     const map = await loadTickerMap();
     const meta = map[t];
     if (!meta) { setStatus(`${t} not found in SEC ticker list`, true); return; }
-    setStatus(`Fetching ${t} filings from EDGAR (can take a few seconds)…`);
-    const cik = String(meta.cik).padStart(10, "0");
-    const r = await fetch(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`);
-    if (!r.ok) throw new Error(`EDGAR returned ${r.status}`);
-    const rows = computeRatios(normalize(await r.json()));
-    if (!rows.length) { setStatus(`${t}: no annual us-gaap data found`, true); return; }
-    companies[t] = { name: meta.name, rows: rows.slice(-8) };
+    let entry = null;
+    // 1) Prebuilt compact data (a few KB — built weekly by CI for the universe)
+    setStatus(`Loading ${t}…`);
+    const pre = await fetch(`data/${t}.json`).catch(() => null);
+    if (pre && pre.ok) {
+      entry = await pre.json();
+    } else {
+      // 2) Fallback: EDGAR via CORS relay (data.sec.gov blocks direct browser calls)
+      setStatus(`${t} not prebuilt — fetching from EDGAR via relay (10s+ on mobile)…`);
+      const cik = String(meta.cik).padStart(10, "0");
+      const edgarUrl = `https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`;
+      const r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(edgarUrl)}`);
+      if (!r.ok) throw new Error(`relay returned ${r.status}`);
+      const rows = computeRatios(normalize(await r.json()));
+      if (!rows.length) { setStatus(`${t}: no annual us-gaap data found`, true); return; }
+      entry = { name: meta.name, rows: rows.slice(-8) };
+    }
+    if (!entry.rows || !entry.rows.length) { setStatus(`${t}: no data`, true); return; }
+    companies[t] = entry;
     selected = t; saveState(); input.value = "";
     setStatus(`${t} added — ${companies[t].rows.length} fiscal years`);
     render();

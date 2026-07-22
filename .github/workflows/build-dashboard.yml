@@ -34,6 +34,8 @@ jobs:
             --out ../output/dashboard.html --cache-dir ../data
       - name: Build ticker map
         run: python scripts/build_tickers.py
+      - name: Build universe data
+        run: python scripts/build_universe.py
       - name: Stage site
         run: cp app/index.html output/index.html
       - uses: actions/upload-pages-artifact@v3
