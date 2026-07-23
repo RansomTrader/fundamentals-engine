@@ -163,3 +163,88 @@ def normalize(facts: dict, ticker: str) -> pd.DataFrame:
 
 def load_ticker(ticker: str, cache_dir: str | Path = "data", **kw) -> pd.DataFrame:
     return normalize(fetch_companyfacts(ticker, cache_dir=cache_dir, **kw), ticker)
+
+
+# ---------------- Quarterly (10-Q) extraction ----------------
+
+QUARTERLY_FLOWS = ["revenue", "net_income", "operating_income", "gross_profit"]
+
+
+def _duration_records(units_block: dict, lo: int, hi: int) -> list[dict]:
+    """Duration records between lo and hi days, from 10-Q or 10-K forms."""
+    out = []
+    for unit, entries in units_block.items():
+        if unit not in ("USD", "shares", "USD/shares"):
+            continue
+        for e in entries:
+            if e.get("form") not in ("10-Q", "10-K", "20-F"):
+                continue
+            start, end = e.get("start"), e.get("end")
+            if not start or not end:
+                continue
+            days = (pd.Timestamp(end) - pd.Timestamp(start)).days
+            if lo <= days <= hi:
+                out.append(e)
+    return out
+
+
+def normalize_quarterly(facts: dict) -> pd.DataFrame:
+    """Quarterly flow values by period end date, deriving Q4 from FY - Q1..Q3.
+
+    Returns a DataFrame indexed by period end (Timestamp) with one column
+    per metric in QUARTERLY_FLOWS (NaN where unavailable).
+    """
+    gaap = facts.get("facts", {}).get("us-gaap", {})
+    frames = {}
+    for metric in QUARTERLY_FLOWS:
+        for tag in CONCEPTS.get(metric, []):
+            if tag not in gaap:
+                continue
+            units = gaap[tag].get("units", {})
+            q = _duration_records(units, 70, 100)
+            a = _duration_records(units, 340, 380)
+            if not q and not a:
+                continue
+            qvals: dict[pd.Timestamp, float] = {}
+            if q:
+                qdf = pd.DataFrame(q)
+                qdf["end"] = pd.to_datetime(qdf["end"])
+                qdf = qdf.sort_values("filed").groupby("end").last()
+                qvals = {ts: rec["val"] for ts, rec in qdf.iterrows()}
+            # Derive missing Q4s: annual minus the three quarters inside it
+            for rec in a:
+                a_start, a_end = pd.Timestamp(rec["start"]), pd.Timestamp(rec["end"])
+                if a_end in qvals:
+                    continue
+                inside = [v for ts, v in qvals.items() if a_start < ts < a_end]
+                if len(inside) == 3:
+                    qvals[a_end] = rec["val"] - sum(inside)
+            if qvals:
+                frames[metric] = pd.Series(qvals, name=metric)
+            break
+    if not frames:
+        return pd.DataFrame()
+    return pd.DataFrame(frames).sort_index()
+
+
+def latest_instants(facts: dict) -> dict:
+    """Most recent balance-sheet values across 10-Q/10-K/20-F filings."""
+    gaap = facts.get("facts", {}).get("us-gaap", {})
+    out = {}
+    for metric in INSTANT_METRICS:
+        for tag in CONCEPTS.get(metric, []):
+            if tag not in gaap:
+                continue
+            recs = []
+            for unit, entries in gaap[tag].get("units", {}).items():
+                if unit != "USD":
+                    continue
+                for e in entries:
+                    if e.get("form") in ("10-Q", "10-K", "20-F") and e.get("end"):
+                        recs.append(e)
+            if not recs:
+                continue
+            recs.sort(key=lambda e: (e["end"], e.get("filed", "")))
+            out[metric] = {"end": recs[-1]["end"], "val": recs[-1]["val"]}
+            break
+    return out

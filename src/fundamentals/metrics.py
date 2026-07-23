@@ -41,6 +41,7 @@ def compute_ratios(df: pd.DataFrame) -> pd.DataFrame:
     # Returns
     d["roe"] = _safe_div(d["net_income"], d["equity"])
     d["roa"] = _safe_div(d["net_income"], d["assets"])
+    d["equity_multiplier"] = _safe_div(d["assets"], d["equity"])
 
     # Liquidity
     d["current_ratio"] = _safe_div(d["current_assets"], d["current_liabilities"])
@@ -62,7 +63,7 @@ def compute_ratios(df: pd.DataFrame) -> pd.DataFrame:
 
 RATIO_COLUMNS = [
     "gross_margin", "operating_margin", "net_margin", "fcf_margin",
-    "rnd_intensity", "roe", "roa", "current_ratio", "quick_ratio",
+    "rnd_intensity", "roe", "roa", "equity_multiplier", "current_ratio", "quick_ratio",
     "debt_to_equity", "interest_coverage", "asset_turnover",
     "revenue_growth", "net_income_growth",
 ]
@@ -71,3 +72,33 @@ PERCENT_RATIOS = {
     "gross_margin", "operating_margin", "net_margin", "fcf_margin",
     "rnd_intensity", "roe", "roa", "revenue_growth", "net_income_growth",
 }
+
+
+def ttm_summary(quarterly: pd.DataFrame, instants: dict) -> dict | None:
+    """Trailing-twelve-month figures from the last 4 quarters + latest instants.
+
+    Requires 4 quarters spanning roughly a year (guards against gaps).
+    """
+    if quarterly is None or quarterly.empty or "revenue" not in quarterly:
+        return None
+    q = quarterly.dropna(subset=["revenue"]).tail(4)
+    if len(q) < 4:
+        return None
+    span = (q.index[-1] - q.index[0]).days
+    if not 240 <= span <= 300:  # 3 quarter-gaps between 4 period-ends
+        return None
+    out = {"through": q.index[-1].date().isoformat()}
+    for col in q.columns:
+        vals = q[col]
+        out[col] = float(vals.sum()) if vals.notna().all() else None
+    if out.get("revenue"):
+        for m, num in [("net_margin", "net_income"),
+                       ("operating_margin", "operating_income"),
+                       ("gross_margin", "gross_profit")]:
+            out[m] = (out[num] / out["revenue"]) if out.get(num) is not None else None
+    eq = instants.get("equity", {}).get("val")
+    out["roe"] = (out["net_income"] / eq) if out.get("net_income") is not None and eq else None
+    ca = instants.get("current_assets", {}).get("val")
+    cl = instants.get("current_liabilities", {}).get("val")
+    out["current_ratio"] = (ca / cl) if ca and cl else None
+    return out

@@ -56,3 +56,50 @@ def test_peer_rank_direction():
     # BBB has higher margins -> rank 1; lower debt/equity should also rank 1
     assert ranks.loc["gross_margin", "rank"] == "1/2"
     assert ranks.loc["debt_to_equity", "rank"] == "1/2"
+
+
+def synthetic_facts():
+    """Minimal companyfacts JSON: FY2025 = 4 quarters of revenue, Q4 omitted
+    from quarterly filings so it must be derived from annual - Q1..Q3."""
+    def dur(start, end, val, form, fy="2025", fp="Q1"):
+        return {"start": start, "end": end, "val": val, "form": form,
+                "fy": int(fy), "fp": fp, "filed": end}
+    revenue_entries = [
+        dur("2025-01-01", "2025-03-31", 10.0, "10-Q"),
+        dur("2025-04-01", "2025-06-30", 12.0, "10-Q"),
+        dur("2025-07-01", "2025-09-30", 11.0, "10-Q"),
+        dur("2025-01-01", "2025-12-31", 47.0, "10-K", fp="FY"),  # implies Q4 = 14
+    ]
+    equity_entries = [
+        {"end": "2025-09-30", "val": 60.0, "form": "10-Q", "fy": 2025,
+         "fp": "Q3", "filed": "2025-10-30"},
+        {"end": "2025-12-31", "val": 65.0, "form": "10-K", "fy": 2025,
+         "fp": "FY", "filed": "2026-02-01"},
+    ]
+    ni_entries = [
+        dur("2025-01-01", "2025-03-31", 1.0, "10-Q"),
+        dur("2025-04-01", "2025-06-30", 1.5, "10-Q"),
+        dur("2025-07-01", "2025-09-30", 1.2, "10-Q"),
+        dur("2025-01-01", "2025-12-31", 5.2, "10-K", fp="FY"),  # Q4 = 1.5
+    ]
+    return {"facts": {"us-gaap": {
+        "Revenues": {"units": {"USD": revenue_entries}},
+        "NetIncomeLoss": {"units": {"USD": ni_entries}},
+        "StockholdersEquity": {"units": {"USD": equity_entries}},
+    }}}
+
+
+def test_quarterly_q4_derivation_and_ttm():
+    from fundamentals.edgar import normalize_quarterly, latest_instants
+    from fundamentals.metrics import ttm_summary
+    facts = synthetic_facts()
+    q = normalize_quarterly(facts)
+    assert len(q) == 4
+    assert q["revenue"].iloc[-1] == pytest.approx(14.0)   # derived Q4
+    inst = latest_instants(facts)
+    assert inst["equity"]["val"] == 65.0                   # latest end wins
+    ttm = ttm_summary(q, inst)
+    assert ttm["revenue"] == pytest.approx(47.0)
+    assert ttm["net_income"] == pytest.approx(5.2)
+    assert ttm["net_margin"] == pytest.approx(5.2 / 47.0)
+    assert ttm["roe"] == pytest.approx(5.2 / 65.0)

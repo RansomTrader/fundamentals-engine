@@ -1,5 +1,23 @@
 # fundamentals-engine
 
+**Live app → https://ransomtrader.github.io/fundamentals-engine/**
+
+An end-to-end equity research platform built entirely on primary-source data:
+a Python ETL pipeline over SEC EDGAR XBRL filings, a CI/CD layer that rebuilds
+the dataset every trading day, and a zero-dependency client app for on-demand
+fundamental analysis, screening, and peer comparison — installable to a phone
+home screen.
+
+| Capability | Detail |
+|---|---|
+| Coverage | 100+ prebuilt US filers (editable via `universe.txt`); any SEC filer on demand |
+| Fundamentals | 8y of as-filed annual data, 14-ratio suite, DuPont ROE decomposition, expense structure |
+| Quarterly | 10-Q series with derived Q4s and trailing-twelve-month metrics |
+| Market | Daily-refreshed prices, 5y charts w/ 50-week MA, relative-return mode, P/E · P/S · P/FCF |
+| Screening | Composite quality score (six-factor percentile rank) across the whole universe |
+| Export | One-tap CSV (tables) and PNG (charts) for downstream analysis |
+| Data integrity | Restatement-aware dedupe, concept-tag fallbacks, NaN-safe math, known-answer test suite |
+
 A reproducible financial-statement analysis pipeline built on primary-source data.
 It pulls as-filed 10-K figures from the **SEC EDGAR XBRL companyfacts API** and
 market data via **yfinance** (Stooq fallback), computes a full ratio suite,
@@ -86,6 +104,14 @@ Design choices worth noting:
    concept.
 3. **Instant vs. duration handling.** Balance-sheet concepts are matched on fiscal-
    year-end instants; income/cash-flow concepts on annual durations.
+
+## Development approach
+
+Built with an AI-assisted engineering workflow: architecture, data-quality
+rules, and validation logic designed iteratively with Anthropic's Claude as a
+pair engineer, with every ratio verified against hand-computed answers in the
+test suite. The workflow itself — delegating implementation while owning
+methodology and verification — is part of what this project demonstrates.
 
 ## Testing
 

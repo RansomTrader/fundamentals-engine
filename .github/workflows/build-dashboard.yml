@@ -39,7 +39,7 @@ jobs:
       - name: Build market data
         run: python scripts/build_market.py
       - name: Stage site
-        run: cp app/index.html output/index.html
+        run: cp -r app/. output/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: output
